@@ -35,9 +35,9 @@ jobs:
         run: pip install uv
 
       - name: Install Horizon
-        run: uv pip install -e .
+        run: uv pip install --system -e .
 
-      - name: Configure GitHub token
+      - name: Configure GitHub
         run: |
           git config --global user.email "bot@jlink.website"
           git config --global user.name "Horizon Bot"
@@ -52,27 +52,3 @@ jobs:
       - name: Deploy to GitHub Pages
         if: github.event_name == 'workflow_dispatch'
         uses: actions/deploy-pages@v4
-
-      - name: Get Pages URL
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "site_url=$(curl -s https://api.github.com/repos/${{ github.repository }}/pages | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("html_url","https://${{ github.repository }}.github.io/Horizon/")')" >> $GITHUB_OUTPUT
-          echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
-
-      - name: Comment on workflow run
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: run } = await github.rest.actions.getWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-            const pagesUrl = `https://${context.repo.owner}.github.io/Horizon/`;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: run.id,
-              body: `## 🌅 Horizon 运行完成\n\n**每日简报**: ${pagesUrl}\n\n触发方式: ${{ github.event_name }}\n运行时间: ${new Date().toLocaleString('zh-CN', {timeZone:'Asia/Shanghai'})}`
-            });
